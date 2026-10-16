@@ -8,10 +8,19 @@ version = "0.1.0"
 description = "Agentic tomato-disease advisor: image diagnosis, weather-aware re-ranking and RAG-grounded recommendations"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "google-genai>=2.31.0",
+    "langchain-google-genai>=4.4.2",
+    "pydantic-settings>=2.16.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
