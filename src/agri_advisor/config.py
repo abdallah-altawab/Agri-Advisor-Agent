@@ -1,6 +1,7 @@
 """Application settings, loaded from environment variables / a local .env file."""
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -20,6 +21,7 @@ class Settings(BaseSettings):
     llm_timeout_s: float = 30.0
     llm_max_retries: int = 2
     log_level: str = "INFO"
+    checkpoint_db_path: Path = Path("data/checkpoints.db")
 
 
 @lru_cache
