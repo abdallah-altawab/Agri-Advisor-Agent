@@ -1,25 +1,22 @@
-# Environment variables
+# Secrets
 .env
 .env.*
 !.env.example
 
-# Virtual environment
-.venv/
-
-# Python cache
+# Python
 __pycache__/
-*.py[cod]
-
-# Build artifacts
+*.pyc
 *.egg-info/
-build/
-dist/
-
-# Testing and tooling
+.venv/
 .pytest_cache/
-.mypy_cache/
 .ruff_cache/
+.ipynb_checkpoints/
 
-# IDE
-.vscode/
-.idea/
+# Local state and artifacts (never commit)
+data/
+uploads/
+*.db
+*.sqlite
+*.sqlite3
+faiss_*/
+*.pth
