@@ -12,6 +12,7 @@ from agri_advisor.persistence import open_checkpointer
 def main() -> None:
     parser = argparse.ArgumentParser(description="Show a saved conversation thread.")
     parser.add_argument("--thread", required=True, help="Thread id to inspect.")
+    parser.add_argument("--full", action="store_true", help="Print complete message content.")
     args = parser.parse_args()
 
     settings = get_settings()
@@ -24,7 +25,11 @@ def main() -> None:
     for message in messages:
         calls = [call["name"] for call in getattr(message, "tool_calls", None) or []]
         suffix = f" tool_calls={calls}" if calls else ""
-        print(f"- {message.type:>5}: {content_to_text(message.content)[:80]!r}{suffix}")
+        text = content_to_text(message.content)
+        if args.full:
+            print(f"- {message.type}{suffix}\n{text}\n")
+        else:
+            print(f"- {message.type:>5}: {text[:80]!r}{suffix}")
 
 
 if __name__ == "__main__":

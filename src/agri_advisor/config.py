@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     llm_max_retries: int = 2
     log_level: str = "INFO"
     checkpoint_db_path: Path = Path("data/checkpoints.db")
+    uploads_dir: Path = Path("data/uploads")
 
 
 @lru_cache
