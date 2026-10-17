@@ -1,4 +1,4 @@
-"""Interactive terminal chat with streaming.
+"""Interactive terminal chat with streaming and tools.
 
 Usage: uv run python scripts/chat_cli.py [--thread NAME]
 Re-using the same --thread name continues the same conversation, even after a restart.
@@ -8,29 +8,33 @@ import argparse
 import logging
 import sys
 
-from langchain_core.messages import AIMessageChunk, HumanMessage
+from langchain_core.messages import AIMessageChunk, HumanMessage, ToolMessage
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import ValidationError
 
 from agri_advisor.config import get_settings
-from agri_advisor.graph.builder import build_graph
-from agri_advisor.graph.nodes import CHAT_NODE
+from agri_advisor.graph.builder import build_graph, run_config
+from agri_advisor.graph.nodes import CHAT_NODE, TOOLS_NODE
 from agri_advisor.llm import build_llm
 from agri_advisor.logging_setup import configure_logging
 from agri_advisor.messages import content_to_text
 from agri_advisor.persistence import open_checkpointer
+from agri_advisor.services.http import make_client
+from agri_advisor.tools.weather_tool import build_weather_tool
 
 log = logging.getLogger("chat_cli")
 
 
 def stream_reply(graph: CompiledStateGraph, user_text: str, thread_id: str) -> None:
-    """Send one user message and print the assistant reply token by token."""
-    config = {"configurable": {"thread_id": thread_id}}
+    """Send one user message and print the reply token by token (and tool activity)."""
     inputs = {"messages": [HumanMessage(content=user_text)]}
-    for chunk, metadata in graph.stream(inputs, config=config, stream_mode="messages"):
-        if metadata.get("langgraph_node") != CHAT_NODE:
-            continue
-        if isinstance(chunk, AIMessageChunk):
+    for chunk, metadata in graph.stream(
+        inputs, config=run_config(thread_id), stream_mode="messages"
+    ):
+        node = metadata.get("langgraph_node")
+        if node == TOOLS_NODE and isinstance(chunk, ToolMessage):
+            print(f"\n[tool: {chunk.name}]", flush=True)
+        elif node == CHAT_NODE and isinstance(chunk, AIMessageChunk):
             print(content_to_text(chunk.content), end="", flush=True)
     print()
 
@@ -51,8 +55,8 @@ def main() -> int:
     llm = build_llm(settings)
     print(f"thread={args.thread} | model={settings.llm_model} | type 'exit' to quit")
 
-    with open_checkpointer(settings.checkpoint_db_path) as saver:
-        graph = build_graph(llm, saver)
+    with make_client() as http_client, open_checkpointer(settings.checkpoint_db_path) as saver:
+        graph = build_graph(llm, saver, tools=[build_weather_tool(http_client)])
         while True:
             try:
                 user_text = input("\nYou: ").strip()

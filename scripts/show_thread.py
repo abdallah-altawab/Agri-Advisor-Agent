@@ -22,7 +22,9 @@ def main() -> None:
     messages = snapshot.values.get("messages", [])
     print(f"thread={args.thread} messages={len(messages)} next={snapshot.next}")
     for message in messages:
-        print(f"- {message.type:>5}: {content_to_text(message.content)[:80]!r}")
+        calls = [call["name"] for call in getattr(message, "tool_calls", None) or []]
+        suffix = f" tool_calls={calls}" if calls else ""
+        print(f"- {message.type:>5}: {content_to_text(message.content)[:80]!r}{suffix}")
 
 
 if __name__ == "__main__":

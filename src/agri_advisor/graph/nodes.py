@@ -3,8 +3,8 @@
 import logging
 from collections.abc import Callable
 
-from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AnyMessage, SystemMessage
+from langchain_core.runnables import Runnable
 
 from agri_advisor.graph.prompts import SYSTEM_PROMPT
 from agri_advisor.graph.state import AgentState
@@ -12,14 +12,16 @@ from agri_advisor.graph.state import AgentState
 log = logging.getLogger(__name__)
 
 CHAT_NODE = "chat"
+TOOLS_NODE = "tools"
 
 
 def make_chat_node(
-    llm: BaseChatModel,
+    llm: Runnable,
     system_prompt: str = SYSTEM_PROMPT,
 ) -> Callable[[AgentState], dict[str, list[AnyMessage]]]:
     """Create the LLM node.
 
+    `llm` may be a plain chat model or one with tools bound via `bind_tools`.
     The system prompt is prepended at call time and is NOT stored in the state,
     so changing the prompt later does not require migrating saved conversations.
     """
